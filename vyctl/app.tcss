@@ -1,0 +1,257 @@
+/* ====================================================================================
+   vyctl stylesheet
+
+   One screen: a narrow textual sidebar on the left, and the console filling the rest.
+   ==================================================================================== */
+
+Screen {
+    background: $surface;
+}
+
+#root {
+    height: 1fr;
+}
+
+/* --------------------------------------------------------------------- sidebar -- */
+
+#sidebar {
+    width: 30%;
+    min-width: 30;
+    max-width: 52;
+    height: 1fr;
+    background: $panel;
+    border-right: solid $primary-darken-2;
+}
+
+/* f9 hides the sidebar so the console gets the whole window. */
+#sidebar.collapsed {
+    display: none;
+}
+
+#brand {
+    height: 2;
+    padding: 0 1;
+    color: $text-muted;
+    background: $panel-darken-1;
+}
+
+.side-heading {
+    width: 100%;
+    height: 1;
+    padding: 0 1;
+    color: $accent;
+    text-style: bold;
+    background: $panel-darken-1;
+}
+
+.side-list {
+    height: auto;
+    max-height: 40%;
+    background: transparent;
+    scrollbar-size-vertical: 1;
+}
+
+/* Two-line rows: name + status underneath. */
+.side-list > ListItem {
+    height: 2;
+    padding: 0 1;
+    background: transparent;
+}
+
+.side-list > ListItem.--highlight {
+    background: $accent 30%;
+}
+
+/* The focused list gets a visible left edge, so it is obvious which one the
+   single-letter shortcuts (a/e/d/p/...) will act on. */
+.side-list:focus > ListItem.--highlight {
+    background: $accent 45%;
+    border-left: thick $accent;
+}
+
+#details-wrap {
+    height: 1fr;
+    scrollbar-size-vertical: 1;
+}
+
+#details {
+    padding: 0 1;
+    color: $text-muted;
+}
+
+/* ----------------------------------------------------------------------- stage -- */
+
+#stage {
+    width: 1fr;
+    height: 1fr;
+    background: $surface-darken-1;
+}
+
+/* One quiet line of context above the console -- everything else lives in the
+   sidebar, so the console itself stays clean. */
+#stage-title {
+    height: 1;
+    padding: 0 1;
+    color: $text-muted;
+    background: $panel-darken-1;
+}
+
+#stage-body {
+    height: 1fr;
+    padding: 0;
+}
+
+/* The embedded console: no border, no padding, no decoration -- just the terminal.
+   Keystrokes go straight to the real claude TUI inside it. */
+.terminal-view {
+    width: 1fr;
+    height: 1fr;
+    padding: 0;
+    background: $surface-darken-2;
+}
+
+.empty-hint {
+    padding: 2 4;
+    color: $text-muted;
+}
+
+/* ------------------------------------------------- headless pane (f10 mode) -- */
+
+.project-pane {
+    width: 1fr;
+    height: 1fr;
+    border: none;
+}
+
+.pane-header {
+    height: 1;
+    background: $panel;
+}
+
+.pane-title {
+    width: 1fr;
+    padding-left: 1;
+    text-style: bold;
+    color: $text;
+}
+
+.pane-path {
+    width: auto;
+    max-width: 40%;
+    padding-right: 1;
+    color: $text-muted;
+}
+
+.pane-badge {
+    width: auto;
+    min-width: 11;
+    padding: 0 1;
+    text-align: right;
+}
+
+.badge-inactive { color: $text-disabled; }
+.badge-starting { color: $accent; }
+.badge-idle     { color: $success; }
+.badge-working  { color: $warning; text-style: bold; }
+.badge-error    { color: $error;   text-style: bold; }
+
+.pane-log {
+    height: 1fr;
+    padding: 0 1;
+    background: $surface-darken-1;
+    scrollbar-size-vertical: 1;
+}
+
+.pane-input {
+    height: 3;
+    border: none;
+    border-top: solid $primary-darken-3;
+    background: $panel;
+}
+
+.pane-input:focus {
+    border-top: solid $accent;
+}
+
+/* --------------------------------------------------------------------- dialogs -- */
+
+.dialog {
+    width: 76;
+    height: auto;
+    max-height: 90%;
+    padding: 1 2;
+    margin: 2 4;
+    border: thick $accent;
+    background: $surface;
+}
+
+.dialog-small {
+    width: 64;
+}
+
+.dialog-help {
+    width: 88;
+    height: 80%;
+}
+
+.dialog-title {
+    width: 100%;
+    margin-bottom: 1;
+    text-style: bold;
+    color: $accent;
+}
+
+.dialog-hint {
+    height: auto;
+    margin-bottom: 1;
+    color: $text-muted;
+}
+
+.dialog Label {
+    margin-top: 1;
+    color: $text-muted;
+}
+
+.dialog Input, .dialog Select {
+    width: 100%;
+}
+
+.dialog TextArea {
+    width: 100%;
+    height: 5;
+}
+
+.dialog-row {
+    height: 3;
+    align-vertical: middle;
+}
+
+.dialog-row Label {
+    width: 1fr;
+    margin-top: 0;
+}
+
+.dialog-buttons {
+    height: auto;
+    margin-top: 1;
+    align-horizontal: right;
+}
+
+.dialog-buttons Button {
+    margin-left: 1;
+    min-width: 12;
+}
+
+ModalScreen {
+    align: center middle;
+    background: $background 70%;
+}
+
+/* Contextual key hints: which single-letter verbs are live for the focused list. */
+#hints {
+    height: auto;
+    max-height: 4;
+    padding: 0 1;
+    color: $text-muted;
+    background: $panel-darken-1;
+}

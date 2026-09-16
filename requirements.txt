@@ -1,0 +1,10 @@
+# vyctl dependencies (everything else is Python 3 stdlib).
+
+# The TUI framework.  Developed and tested against 8.x; 3.x also works.
+textual>=3.0,<9
+
+# Interactive pane mode: a real Windows ConPTY per project (pywinpty) plus a terminal
+# emulator to interpret what it draws (pyte).  Without these, vyctl still runs --
+# it falls back to headless panes and tells you so.
+pywinpty>=2.0; sys_platform == "win32"
+pyte>=0.8

@@ -1,0 +1,4 @@
+"""vyctl -- a lightweight Textual dashboard for parallel Claude Code sessions."""
+
+__version__ = "1.0.0"
+__all__ = ["__version__"]

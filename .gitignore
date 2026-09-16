@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+*.pyc
+.ruff_cache/
+config.json
+config.json.bak
+console-settings.json
+# Debug logs.  --debug-raw records every byte the consoles emit, i.e. your session
+# text, so keep the wildcard broad rather than naming one file.
+*.log
+*.log.*
+# Windows shortcuts embed absolute paths and the machine's NetBIOS name.
+*.lnk
