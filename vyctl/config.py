@@ -149,6 +149,12 @@ class AppConfig(_JsonModel):
     #: model -- the symptom is a pane where everything looks highlighted.  Passed per
     #: launch via ``--settings``, so your own ~/.claude/settings.json is never touched.
     force_classic_tui: bool = True
+    #: Alert when a background session finishes a turn or asks for approval.  Running
+    #: several sessions only pays off if you do not have to watch them, so this is on.
+    notify_on_idle: bool = True
+    #: Ring the terminal bell alongside the in-app toast.  Windows Terminal turns a bell
+    #: into a taskbar flash when the profile sets bellStyle, which is the point.
+    notify_bell: bool = True
     #: Lines of scrollback each interactive console keeps.  Without history a terminal
     #: emulator holds only the visible rows, so there is nothing to scroll back to.
     scrollback_lines: int = 5000
@@ -213,6 +219,8 @@ class AppConfig(_JsonModel):
             "stream_json": self.stream_json,
             "max_log_lines": self.max_log_lines,
             "force_classic_tui": self.force_classic_tui,
+            "notify_on_idle": self.notify_on_idle,
+            "notify_bell": self.notify_bell,
             "scrollback_lines": self.scrollback_lines,
             "log_level": self.log_level,
             "log_raw_stream": self.log_raw_stream,

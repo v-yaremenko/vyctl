@@ -109,6 +109,9 @@ class VyctlApp(App[None]):
         )
         #: project id -> the stage widget showing that project.
         self._stages: dict[str, ProjectPane | TerminalView] = {}
+        #: Projects already announced for the current attention flag, so the
+        #: toast and bell fire once per event rather than on every repaint.
+        self._announced: set[str] = set()
         #: The project currently on the stage.
         self._selected: str | None = None
         self._tearing_down = False
@@ -308,6 +311,7 @@ class VyctlApp(App[None]):
 
     def _select_project(self, project_id: str) -> None:
         """Swap which project's console occupies the stage."""
+        self._clear_attention(project_id)
         if project_id not in self._stages or project_id == self._selected:
             self._selected = project_id if project_id in self._stages else self._selected
             self._refresh_stage_title()
@@ -367,7 +371,41 @@ class VyctlApp(App[None]):
             widget.refresh()
         self._refresh_project_row(session.project.id)
         if session.project.id == self._selected:
+            self._clear_attention(session.project.id)
             self._refresh_stage_title()
+        elif session.attention and session.project.id not in self._announced:
+            self._announce_attention(session)
+
+    def _announce_attention(self, session: TerminalSession) -> None:
+        """Tell the user that a session they are not watching wants them.
+
+        Announced once per flag: the session keeps its marker in the sidebar until it
+        is selected, but the toast and the bell fire on the edge only.
+        """
+        self._announced.add(session.project.id)
+        self.notify(
+            f"{session.project.name} {session.attention_reason}",
+            title="Session needs you",
+            severity="information",
+            timeout=8,
+        )
+        if self.config.notify_bell:
+            # Windows Terminal turns BEL into a taskbar flash when the profile asks it
+            # to, which is what makes this visible with the window in the background.
+            try:
+                sys.stdout.write("\a")
+                sys.stdout.flush()
+            except Exception:  # pragma: no cover - a closed stdout must not crash a pane
+                pass
+
+    def _clear_attention(self, project_id: str | None) -> None:
+        """The user is looking at this session, so it no longer needs flagging."""
+        if project_id is None:
+            return
+        self._announced.discard(project_id)
+        session = self.terminals.get(project_id) if self.interactive else None
+        if session is not None:
+            session.clear_attention()
 
     # ---------------------------------------------------------------- sidebar --
 

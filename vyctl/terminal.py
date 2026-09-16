@@ -446,6 +446,13 @@ class TerminalSession:
         self._launched = False
         #: Loop timestamp of the first byte read, for the launch fallback timer.
         self._first_data_at: float | None = None
+        #: Set when this session wants the user's eyes: it finished a turn, or it is
+        #: asking for a permission decision.  Cleared when the user looks at it.
+        self.attention = False
+        self.attention_reason = ""
+        #: Last value of the awaiting-input check, so a standing prompt raises attention
+        #: once rather than on every repaint.
+        self._was_awaiting = False
         #: Lines above the live view currently on show (0 = live).  Owned here rather
         #: than by pyte so that incoming output cannot yank the view back to the bottom.
         self._scroll_offset = 0
@@ -899,7 +906,35 @@ class TerminalSession:
             return
         text = "\n".join(self._screen.display).lower()
         busy = any(marker in text for marker in _BUSY_MARKERS)
+        was_working = self._status is TerminalStatus.WORKING
         self._set_status(TerminalStatus.WORKING if busy else TerminalStatus.IDLE)
+
+        # A turn that just ended is the moment the user wants to know about: the whole
+        # point of running several sessions is not having to watch any of them.
+        if was_working and not busy:
+            self._raise_attention("finished a turn")
+
+        # A permission prompt is standing text, so only the rising edge counts.
+        awaiting = any(marker in text for marker in _PROMPT_MARKERS)
+        if awaiting and not self._was_awaiting:
+            self._raise_attention("waiting for your approval")
+        self._was_awaiting = awaiting
+
+    def _raise_attention(self, reason: str) -> None:
+        """Flag that this session wants the user, unless they are already watching it."""
+        if not self.config.notify_on_idle or self._focused:
+            return
+        self.attention = True
+        self.attention_reason = reason
+        logs.log().info("[%s] wants attention: %s", self.project.name, reason)
+        self._notify()
+
+    def clear_attention(self) -> None:
+        """Called when the user selects this session -- they have seen it."""
+        if self.attention:
+            self.attention = False
+            self.attention_reason = ""
+            self._notify()
 
     def awaiting_input(self) -> bool:
         """True when Claude appears to be waiting for a permission decision."""
