@@ -81,6 +81,7 @@ so you can always get out of a live session. Everything else goes to Claude.
 | `f2` / `f3` | focus the SESSIONS / TODO list |
 | `f4` or `?` | help |
 | `f5` | restart the selected session (also how you abort a running turn) |
+| `f6` | search every session's scrollback and jump to a hit |
 | `f9` | hide/show the sidebar |
 | `f10` | switch console mode: real terminal ↔ headless log |
 | `f12` | release the keyboard back to the sidebar |
@@ -88,6 +89,7 @@ so you can always get out of a live session. Everything else goes to Claude.
 | `ctrl+q` | quit — kills every background `powershell.exe` and `claude` |
 | **In the console** | everything else: typing, arrows, `shift+tab`, `ctrl+c`, `/commands` |
 | wheel · `shift+pageup`/`pagedown` | scroll the console's history (`shift+end` = back to live) |
+| | History holds its place while the session keeps writing; typing returns you to live. |
 | `ctrl+v` | paste the clipboard into the prompt (multi-line arrives as one block) |
 | `f8` | copy what the console shows to the clipboard |
 | `ctrl+c` | **interrupt**, as in any terminal — which is why copy is `f8` |

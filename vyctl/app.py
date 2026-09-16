@@ -40,6 +40,7 @@ from .widgets import (
     ProjectForm,
     ProjectItem,
     ProjectPane,
+    SearchDialog,
     TaskForm,
     TaskItem,
     TerminalView,
@@ -60,6 +61,7 @@ class VyctlApp(App[None]):
         Binding("f3", "focus_tasks", "Tasks"),
         Binding("f4", "help", "Help"),
         Binding("f5", "restart_session", "Restart", show=False),
+        Binding("f6", "search", "Search", show=False),
         Binding("f8", "copy_console", "Copy", show=False),
         Binding("f9", "toggle_sidebar", "Sidebar", show=False),
         Binding("f10", "toggle_pane_mode", "Mode", show=False),
@@ -375,6 +377,34 @@ class VyctlApp(App[None]):
             self._refresh_stage_title()
         elif session.attention and session.project.id not in self._announced:
             self._announce_attention(session)
+
+    def action_search(self) -> None:
+        """Find text in any session's scrollback and jump to it (f6)."""
+        if not self.interactive:
+            self.notify("Search needs interactive panes (f10).", severity="warning")
+            return
+
+        def search(query: str) -> list[tuple]:
+            hits: list[tuple] = []
+            for project in self.config.projects:
+                session = self.terminals.get(project.id)
+                if session is None:
+                    continue
+                for index, text in session.search(query):
+                    hits.append((project.id, project.name, index, text))
+            return hits
+
+        def jump(result: tuple | None) -> None:
+            if result is None:
+                return
+            project_id, index = result
+            self._select_project(project_id)
+            session = self.terminals.get(project_id)
+            if session is not None:
+                session.scroll_to_line(index)
+                self._refresh_stage_title()
+
+        self.push_screen(SearchDialog(search), jump)
 
     def _announce_attention(self, session: TerminalSession) -> None:
         """Tell the user that a session they are not watching wants them.

@@ -792,6 +792,46 @@ class TerminalSession:
         self._dirty = True
         self._notify()
 
+    def scrollback_lines(self) -> list[str]:
+        """The whole retained console as plain text, oldest line first.
+
+        History and the live screen are the same ``x -> Char`` mappings, so they
+        concatenate directly; index 0 is the oldest line still retained.
+        """
+        screen = self._screen
+        if screen is None:
+            return []
+        rows = list(screen.history.top) + [screen.buffer[y] for y in range(screen.lines)]
+        return [
+            "".join(row[x].data or " " for x in range(screen.columns)).rstrip()
+            for row in rows
+        ]
+
+    def search(self, query: str) -> list[tuple[int, str]]:
+        """Every scrollback line containing *query*, as ``(line index, text)``.
+
+        Case-insensitive, plain substring: this is "where did it say that", not grep.
+        """
+        if not query:
+            return []
+        needle = query.lower()
+        return [
+            (i, line)
+            for i, line in enumerate(self.scrollback_lines())
+            if needle in line.lower()
+        ]
+
+    def scroll_to_line(self, index: int) -> None:
+        """Put the scrollback line at *index* on the top row of the pane."""
+        if self._screen is None:
+            return
+        self._sync_scroll()
+        # The offset counts back from the live bottom; history.top holds everything
+        # above the live screen, so this lands the match on the first visible row.
+        self._scroll_offset = max(0, min(self._history_lines - index, self._history_lines))
+        self._dirty = True
+        self._notify()
+
     def _visible_rows(self) -> list:
         """The ``rows`` lines currently on show, oldest first.
 

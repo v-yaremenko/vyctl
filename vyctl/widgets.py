@@ -22,6 +22,7 @@ from textual.widgets import (
     Input,
     Label,
     ListItem,
+    ListView,
     RichLog,
     Select,
     Static,
@@ -609,6 +610,67 @@ class ConfirmDialog(ModalScreen[bool]):
         self.dismiss(False)
 
 
+class SearchDialog(ModalScreen[tuple | None]):
+    """Search every session's scrollback at once (``f6``).
+
+    Dismisses with ``(project_id, line_index)`` for the chosen hit, or None.  The
+    search itself is done by the caller -- this screen only renders the results, so it
+    stays ignorant of how sessions are stored.
+    """
+
+    BINDINGS = [("escape", "cancel", "Cancel")]
+
+    def __init__(self, search) -> None:
+        super().__init__()
+        #: ``query -> [(project_id, project_name, line_index, text), ...]``
+        self._search = search
+        self._hits: list[tuple] = []
+
+    def compose(self) -> ComposeResult:
+        with Vertical(classes="dialog"):
+            yield Label("Search all sessions", classes="dialog-title")
+            yield Input(placeholder="text to find", id="search-query")
+            yield Static("", id="search-count", classes="dialog-hint")
+            with VerticalScroll():
+                yield ListView(id="search-results")
+
+    def on_mount(self) -> None:
+        self.query_one("#search-query", Input).focus()
+
+    def on_input_changed(self, event: Input.Changed) -> None:
+        self._render_hits(self._search(event.value))
+
+    def _render_hits(self, hits: list[tuple]) -> None:
+        self._hits = hits
+        view = self.query_one("#search-results", ListView)
+        view.clear()
+        for _pid, name, _index, text in hits[:200]:
+            view.append(ListItem(Label(f"{name}  {text.strip()[:70]}")))
+        count = self.query_one("#search-count", Static)
+        if not hits:
+            count.update("no matches")
+        else:
+            shown = min(len(hits), 200)
+            more = "" if shown == len(hits) else f" (showing first {shown})"
+            count.update(f"{len(hits)} matches{more} -- enter to jump")
+
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Enter from the query box jumps straight to the first hit."""
+        if self._hits:
+            pid, _name, index, _text = self._hits[0]
+            self.dismiss((pid, index))
+
+    def on_list_view_selected(self, event: ListView.Selected) -> None:
+        view = self.query_one("#search-results", ListView)
+        position = view.index or 0
+        if 0 <= position < len(self._hits):
+            pid, _name, index, _text = self._hits[position]
+            self.dismiss((pid, index))
+
+    def action_cancel(self) -> None:
+        self.dismiss(None)
+
+
 class HelpScreen(ModalScreen[None]):
     """Keyboard reference (``?``)."""
 
@@ -629,6 +691,7 @@ ALWAYS AVAILABLE  (these work even while a console has the keyboard)
   f2            focus the SESSIONS list      f3   focus the TODO list
   f4 / ?        this help
   f5            restart the selected session (also aborts a running turn)
+  f6            search every session's scrollback and jump to a hit
   f9            hide/show the sidebar -- console takes the whole window
   f10           switch console mode: real terminal <-> headless log
   f12           release the keyboard back to the sidebar
@@ -644,7 +707,8 @@ IN THE CONSOLE
   shift+pageup/down  the same, by the keyboard
   shift+home         jump to the oldest line kept
   shift+end          jump back to live output
-  Any new output returns the view to live on its own.
+  Output no longer drags the view down: history stays put while a session
+  keeps writing.  Typing returns you to live.
 
 CLIPBOARD
   ctrl+v      paste the Windows clipboard into the prompt.  Multi-line text
