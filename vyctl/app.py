@@ -61,7 +61,7 @@ class VyctlApp(App[None]):
         Binding("f3", "focus_tasks", "Tasks"),
         Binding("f4", "help", "Help"),
         Binding("f5", "restart_session", "Restart", show=False),
-        Binding("f6", "search", "Search", show=False),
+        Binding("f6", "search", "Search"),
         Binding("f8", "copy_console", "Copy", show=False),
         Binding("f9", "toggle_sidebar", "Sidebar", show=False),
         Binding("f10", "toggle_pane_mode", "Mode", show=False),
